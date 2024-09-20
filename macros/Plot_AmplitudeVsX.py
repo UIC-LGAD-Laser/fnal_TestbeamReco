@@ -43,6 +43,9 @@ class HistoInfo:
         # #     th2.RebinX(2)
 
         return th2
+    
+    def getName(self, hname):
+        return self.outHistoName
 
     def getTH1(self, hname):
         htitle = ";%s;%s"%(self.xlabel, self.ylabel)
@@ -137,6 +140,9 @@ if debugMode:
 all_histoInfos = histoInfo_overall + histoInfo_channel
 nbins = all_histoInfos[0].th2.GetXaxis().GetNbins()
 
+midgap_bins = [all_histoInfos[0].th1.GetXaxis().FindBin(-0.25)]
+amplitude_distrib = TFile("%sMidGapAmp_distribution.root"%(outdir),"RECREATE")
+
 plot_xlimit = abs(inputfile.Get("stripBoxInfo00").GetMean(1) - position_center)
 if ("pad" not in dataset) and ("500x500" not in dataset):
     plot_xlimit-= pitch/(2 * 1000.)
@@ -188,6 +194,10 @@ for i in range(1, nbins+1):
                 # msg_amp+= " -> Amplitude: %.3f mV"%(value)
                 msg_amp+= " -> Entries: %.3f"%(tmpHist.GetEntries())
                 print(msg_amp)
+            if(i in midgap_bins and info_entry.outHistoName == "Amplitude_ch03"):
+                tmpHist.GetXaxis().SetRangeUser(0,200)
+                tmpHist.Write()
+                myLanGausFunction.Write()
         else:
             value = 0.0
 
@@ -199,6 +209,7 @@ for i in range(1, nbins+1):
 
         info_entry.th1.SetBinContent(i, value)
 
+amplitude_distrib.Close()
 # Define output file
 output_path = "%sAmplitudeVsX"%(outdir)
 if (is_tight):
