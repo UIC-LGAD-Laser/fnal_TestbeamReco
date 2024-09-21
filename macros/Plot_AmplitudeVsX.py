@@ -194,10 +194,12 @@ for i in range(1, nbins+1):
                 # msg_amp+= " -> Amplitude: %.3f mV"%(value)
                 msg_amp+= " -> Entries: %.3f"%(tmpHist.GetEntries())
                 print(msg_amp)
-            if(i in midgap_bins and info_entry.outHistoName == "Amplitude_ch03"):
+            if(i in midgap_bins and info_entry.outHistoName == "Amplitude_ch04"):
+                tmpHist.Scale(1/tmpHist.Integral())
                 tmpHist.GetXaxis().SetRangeUser(0,200)
+                myLanGausFunction2 = fit.fit(tmpHist, fitrange=(myMean-1.5*myRMS, myMean+3*myRMS))
                 tmpHist.Write()
-                myLanGausFunction.Write()
+                myLanGausFunction2.Write()
         else:
             value = 0.0
 

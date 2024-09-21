@@ -109,9 +109,9 @@ def SensorInfo(sensor="Name", bias_voltage="", write_bv=True, adjustleft=0, mtop
     text.SetTextSize(tsize-4)
     text.SetTextAlign(31)
 
-    string = "#bf{%s}"%sensor
-    if bias_voltage:
-        string = "%s, %sV}"%(string[:-1], bias_voltage)
+    string = "#bf{Sensor: %s}"%sensor
+    # if bias_voltage:
+        # string = "%s, %sV}"%(string[:-1], bias_voltage)
 
     text.DrawLatexNDC(1-mright-0.005-adjustleft, 1-mtop+0.01, string)
 
