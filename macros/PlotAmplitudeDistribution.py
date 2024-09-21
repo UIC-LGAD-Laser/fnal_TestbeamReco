@@ -107,6 +107,7 @@ for file_iter,fit,color,label in zip(rootfiles,fit_type,colors,labels):
     if count > 0: suffix = "same" 
     else: suffix = ""
     hist.Draw(f'hist {suffix}')
+    hist.SetLineWidth(1)
     fit_func = file_iter.Get(fit)
     fit_func.SetLineColor(color)
     fit_func.Draw("same")
