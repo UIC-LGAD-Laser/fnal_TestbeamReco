@@ -90,9 +90,14 @@ debugMode = options.debugMode
 is_tight = options.useTight
 
 # Get position of the central channel in the "x" direction
-position_center = mf.get_central_channel_position(inputfile, "x")
+# position_center = mf.get_central_channel_position(inputfile, "x")
+position_center = 0.25
 
-outdir = myStyle.GetPlotsDir(outdir, "Amplitude/")
+outdirOld = myStyle.GetPlotsDir(outdir, "AmplitudeCompare/")
+
+outdirSave = "../Paper_plots/"
+if not os.path.exists(outdirSave):
+    myStyle.CreateFolder("../", "Paper_plots/")
 
 # Save list with histograms to draw
 list_overall_htitles = [
@@ -103,7 +108,8 @@ list_overall_htitles = [
 
 # Amplitude per channel
 list_channel_htitles = []
-indices = mf.get_existing_indices(inputfile, "amplitude_vs_xy_channel")
+# indices = mf.get_existing_indices(inputfile, "amplitude_vs_xy_channel")
+indices = ["02","03"]
 for index in indices:
     channel_element = ["amplitude_vs_xy_channel%s"%index, "Amplitude_ch%s"%index, "MPV signal amplitude [mV]"]
     list_channel_htitles.append(channel_element)
@@ -141,7 +147,6 @@ all_histoInfos = histoInfo_overall + histoInfo_channel
 nbins = all_histoInfos[0].th2.GetXaxis().GetNbins()
 
 midgap_bins = [all_histoInfos[0].th1.GetXaxis().FindBin(-0.25)]
-amplitude_distrib = TFile("%sMidGapAmp_distribution.root"%(outdir),"RECREATE")
 
 plot_xlimit = abs(inputfile.Get("stripBoxInfo00").GetMean(1) - position_center)
 if ("pad" not in dataset) and ("500x500" not in dataset):
@@ -152,7 +157,7 @@ fit = langaus.LanGausFit()
 print("Setup Langaus")
 
 # Loop over X bins
-for i in range(1, nbins+1):
+for i in range(all_histoInfos[0].th1.GetXaxis().FindBin(-0.25), all_histoInfos[0].th1.GetXaxis().FindBin(0.30)):
     for info_entry in all_histoInfos:
         totalEvents = info_entry.th2.GetEntries()
         tmpHist = info_entry.th2.ProjectionY("py",i,i)
@@ -194,15 +199,6 @@ for i in range(1, nbins+1):
                 # msg_amp+= " -> Amplitude: %.3f mV"%(value)
                 msg_amp+= " -> Entries: %.3f"%(tmpHist.GetEntries())
                 print(msg_amp)
-            if(i in midgap_bins and info_entry.outHistoName == "Amplitude_ch04"):
-                max_bin = tmpHist.GetMaximumBin()
-                max_count = tmpHist.GetBinContent(max_bin)
-                tmpHist.Scale(1.0 / max_count)
-                # tmpHist.Scale(1/tmpHist.Integral())
-                tmpHist.GetXaxis().SetRangeUser(0,200)
-                myLanGausFunction2 = fit.fit(tmpHist, fitrange=(myMean-1.5*myRMS, myMean+3*myRMS))
-                tmpHist.Write()
-                myLanGausFunction2.Write()
         else:
             value = 0.0
 
@@ -214,9 +210,8 @@ for i in range(1, nbins+1):
 
         info_entry.th1.SetBinContent(i, value)
 
-amplitude_distrib.Close()
 # Define output file
-output_path = "%sAmplitudeVsX"%(outdir)
+output_path = "%sCompare_AmplitudeVsX"%(outdirSave)
 if (is_tight):
     output_path+= "_tight"
 output_path+= ".root"
@@ -224,7 +219,8 @@ output_path+= ".root"
 outputfile = TFile(output_path,"RECREATE")
 
 # Define hist for axes style
-htemp = TH1F("htemp", "", 1, -xlength, xlength)
+# htemp = TH1F("htemp", "", 1, -xlength, xlength)
+htemp = TH1F("htemp", "", 1, -0.49, 0.49)
 htemp.SetStats(0)
 htemp.GetXaxis().SetTitle("Track x position [mm]")
 htemp.GetYaxis().SetRangeUser(0.0, ylength)
@@ -263,7 +259,7 @@ for i,info_entry in enumerate(histoInfo_overall):
     # myStyle.BeamInfo()
     myStyle.SensorInfoSmart(dataset)
 
-    save_path = "%s%s_vs_x"%(outdir, info_entry.outHistoName)
+    save_path = "%s%s_vs_x"%(outdirSave, info_entry.outHistoName)
     if (is_tight):
         save_path+= "_tight"
     canvas.SaveAs("%s.gif"%save_path)
@@ -286,7 +282,8 @@ htemp.Draw("AXIS")
 for box in boxes:
     box.Draw()
 gPad.RedrawAxis("g")
-
+map = {'02': [2],
+        '03': [1]}
 for i,info_entry in enumerate(histoInfo_channel):
     hist = info_entry.th1
     hist.SetLineColor(colors[i])
@@ -294,18 +291,30 @@ for i,info_entry in enumerate(histoInfo_channel):
     hist.Draw("hist same")
 
     idx = indices[i]
-    ltitle = "Pad %s"%(idx) if "10" in indices else "Strip %i"%(int(idx[1])+1)
+    ltitle = "Pad %s"%(idx) if "10" in indices else "Strip %i"%(map[str(idx)][0])
     legend.AddEntry(hist, ltitle, "lep")
 
     hist.Write()
-
 htemp.Draw("AXIS same")
+
+inputfileLaser = TFile("%s%sPlotAmplitudeVsX.root"%("/uscms/home/snanda/nobackup/LaserDanushUpdated/TestbeamReco/output/","LeCroy_W2_3_2_198V_99P9attn/"))
+histRightCh = inputfileLaser.Get("amplitude_vs_x_channel01")
+histRightCh.SetLineColor(colors[0])
+histRightCh.SetLineWidth(2)
+histRightCh.SetLineStyle(7)
+histLeftCh = inputfileLaser.Get("amplitude_vs_x_channel02")
+histLeftCh.SetLineColor(colors[1])
+histLeftCh.SetLineWidth(2)
+histLeftCh.SetLineStyle(7)
+histRightCh.Draw("SAME")
+histLeftCh.Draw("SAME")
+
 legend.Draw()
 
 # myStyle.BeamInfo()
 myStyle.SensorInfoSmart(dataset)
 
-save_path = "%sAmplitudeAllChannels_vs_x"%(outdir)
+save_path = "%sAmplitudeAllChannels_vs_x"%(outdirSave)
 canvas.SaveAs("%s.gif"%save_path)
 canvas.SaveAs("%s.pdf"%save_path)
 
