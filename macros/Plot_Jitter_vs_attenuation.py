@@ -151,6 +151,7 @@ graph.GetYaxis().SetRangeUser(15.0, 35.0)
 graph.GetXaxis().SetRangeUser(90,95)
 graph.Draw("AP same")
 
+# if ftbf_jitter_err<1: ftbf_jitter_err = 1
 band = TGraphAsymmErrors(2, array('d', [91.5, 94]), array('d', [ftbf_jitter, ftbf_jitter]), array('d', [0, 0]), array('d', [0, 0]), array('d', [ftbf_jitter_err]*2), array('d', [ftbf_jitter_err]*2))
 band.SetFillColor(4)
 band.SetFillStyle(3001)  # 3001 is a style for a semi-transparent fill
@@ -174,9 +175,9 @@ scaledline.SetLineStyle(4)
 scaledline.SetLineWidth(2)
 scaledline.Draw("L same")
 
-legend = TLegend(0.15, 0.7, 0.65, 0.9)
-legend.AddEntry(line, "120 GeV protons", "l")
-legend.AddEntry(scaledline, "120 GeV protons (Scaled)", "l")
+legend = TLegend(0.15, 0.7, 0.67, 0.9)
+legend.AddEntry(line, "120 GeV protons", "f")
+legend.AddEntry(scaledline, "120 GeV protons (Scaled)", "f")
 legend.AddEntry(graph, "Laser", "ep")
 legend.SetBorderSize(1)
 legend.SetLineColor(kBlack)

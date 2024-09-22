@@ -284,11 +284,11 @@ for i,info_entry in enumerate(histoInfo_channel):
 
 
 inputfileLaser = TFile("%s%sPlotAmplitudeVsX.root"%("/uscms/home/snanda/nobackup/LaserDanushUpdated/TestbeamReco/output/","LeCroy_W2_3_2_198V_99P9attn/"))
-histRightCh = inputfileLaser.Get("amplitude_vs_x_channel01")
+histRightCh = inputfileLaser.Get("amplitude_vs_x_channel02")
 histRightCh.SetLineColor(colors[0])
 histRightCh.SetLineWidth(2)
 histRightCh.SetLineStyle(7)
-histLeftCh = inputfileLaser.Get("amplitude_vs_x_channel02")
+histLeftCh = inputfileLaser.Get("amplitude_vs_x_channel01")
 histLeftCh.SetLineColor(colors[1])
 histLeftCh.SetLineWidth(2)
 histLeftCh.SetLineStyle(7)
