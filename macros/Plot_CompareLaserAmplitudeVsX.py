@@ -1,4 +1,4 @@
-from ROOT import TFile,TTree,TCanvas,TH1D,TH1F,TH2F,TLatex,TMath,TEfficiency,TGraphAsymmErrors,TLegend,gROOT,gStyle, gPad, kWhite, kBlack
+from ROOT import TFile,TTree,TCanvas,TH1D,TH1F,TH2F,TLatex,TMath,TEfficiency,TGraphAsymmErrors,TLegend,TPaveText,gROOT,gStyle, gPad, kWhite, kBlack
 import ROOT
 import os
 from stripBox import getStripBox
@@ -67,7 +67,7 @@ class HistoInfo:
 # Construct the argument parser
 parser = optparse.OptionParser("usage: %prog [options]\n")
 parser.add_option('-x','--xlength', dest='xlength', default = 2.5, help="Limit x-axis in final plot")
-parser.add_option('-y','--ylength', dest='ylength', default = 150, help="Max Amp value in final plot")
+parser.add_option('-y','--ylength', dest='ylength', default = 160, help="Max Amp value in final plot")
 parser.add_option('-D', dest='Dataset', default = "", help="Dataset, which determines filepath")
 parser.add_option('-d', dest='debugMode', action='store_true', default = False, help="Run debug mode")
 parser.add_option('-t', dest='useTight', action='store_true', default = False, help="Use tight cut for pass")
@@ -109,11 +109,11 @@ list_overall_htitles = [
 # Amplitude per channel
 list_channel_htitles = []
 # indices = mf.get_existing_indices(inputfile, "amplitude_vs_xy_channel")
-indices = ["02","03"]
+indices = ["03","02"]
 for index in indices:
     channel_element = ["amplitude_vs_xy_channel%s"%index, "Amplitude_ch%s"%index, "MPV signal amplitude [mV]"]
     list_channel_htitles.append(channel_element)
-    ncol = int(index[1])+1 if index[0] != "0" else 3
+    ncol = int(index[1])+1 if index[0] != "0" else 2
 
 # Use tight cut histograms
 if (is_tight):
@@ -240,43 +240,29 @@ for i,info_entry in enumerate(histoInfo_overall):
     haxis.SetMinimum(ymin)
     haxis.SetMaximum(ymax)
 
-    haxis.Draw("AXIS")
     # Define and draw gray bars in the background (Position of metallic sections)
     boxes = getStripBox(inputfile, ymin=ymin, ymax=ymax, strips=True,
                         shift=position_center, pitch=pitch/1000.)
-    for box in boxes:
-        box.Draw()
-    gPad.RedrawAxis("g")
-
-    hist.Draw("hist same")
-    # legend.AddEntry(hist, legend_name[i], "lep")
 
     hist.Write()
 
-    haxis.Draw("AXIS same")
-    # legend.Draw()
-
-    # myStyle.BeamInfo()
-    myStyle.SensorInfoSmart(dataset)
-
-    save_path = "%s%s_vs_x"%(outdirSave, info_entry.outHistoName)
-    if (is_tight):
-        save_path+= "_tight"
-    canvas.SaveAs("%s.gif"%save_path)
-    canvas.SaveAs("%s.pdf"%save_path)
-
-    canvas.Clear()
 
 # Draw all amplitude per channel vs X
 # Define legend
 pcenter = myStyle.GetPadCenter()
 pmargin = myStyle.GetMargin()
-legend = TLegend(pcenter-0.30, 1-pmargin-0.23, pcenter+0.30, 1-pmargin-0.01)
-legend.SetBorderSize(0)
+legend = TLegend(pcenter-0.30, 1-pmargin-0.15, pcenter+0.30, 1-pmargin-0.05)
+legend.SetLineColor(kBlack)
 # legend.SetFillColor(kWhite)
 legend.SetTextFont(myStyle.GetFont())
 legend.SetTextSize(myStyle.GetSize()-4)
 legend.SetNColumns(ncol)
+
+legendBot = TLegend(pcenter-0.30, 1-pmargin-0.25, pcenter+0.30, 1-pmargin-0.15)
+legendBot.SetNColumns(2)
+legendBot.SetLineColor(kBlack)
+legendBot.SetTextFont(myStyle.GetFont())
+legendBot.SetTextSize(myStyle.GetSize()-4)
 
 htemp.Draw("AXIS")
 for box in boxes:
@@ -292,10 +278,10 @@ for i,info_entry in enumerate(histoInfo_channel):
 
     idx = indices[i]
     ltitle = "Pad %s"%(idx) if "10" in indices else "Strip %i"%(map[str(idx)][0])
-    legend.AddEntry(hist, ltitle, "lep")
+    legend.AddEntry(hist, ltitle, "lp")
 
     hist.Write()
-htemp.Draw("AXIS same")
+
 
 inputfileLaser = TFile("%s%sPlotAmplitudeVsX.root"%("/uscms/home/snanda/nobackup/LaserDanushUpdated/TestbeamReco/output/","LeCroy_W2_3_2_198V_99P9attn/"))
 histRightCh = inputfileLaser.Get("amplitude_vs_x_channel01")
@@ -310,12 +296,26 @@ histRightCh.Draw("SAME")
 histLeftCh.Draw("SAME")
 
 legend.Draw()
+ftbf_tmphist = histoInfo_overall[-1].th1.Clone()
+ftbf_tmphist.SetLineColor(kBlack)
+laser_tmphist = histRightCh.Clone()
+laser_tmphist.SetLineColor(kBlack)
+laser_tmphist.SetLineStyle(7)
+legendBot.AddEntry(ftbf_tmphist, "120 GeV protons")
+legendBot.AddEntry(laser_tmphist, "Laser")
+legendBot.Draw()
+legendBox = TPaveText(pcenter-0.30, 1-pmargin-0.25, pcenter+0.30, 1-pmargin-0.05, "NDC")
+legendBox.SetBorderSize(1)
+legendBox.SetLineColor(kBlack)
+legendBox.SetFillColor(0)
+legendBox.SetFillColorAlpha(0, 0.0)
+legendBox.Draw("same")
 
 # myStyle.BeamInfo()
-myStyle.SensorInfoSmart(dataset)
+myStyle.SensorInfoSmart(dataset,isPaperPlot=True)
 
+htemp.Draw("AXIS same")
 save_path = "%sAmplitudeAllChannels_vs_x"%(outdirSave)
-canvas.SaveAs("%s.gif"%save_path)
 canvas.SaveAs("%s.pdf"%save_path)
 
 canvas.Clear()
