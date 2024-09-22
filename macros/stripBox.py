@@ -9,7 +9,7 @@ def getStripBox(f, ymin=0.0, ymax=100.0, getCenter=False, color=18,
         l_idx = get_existing_indices(f, stripBox)
         boxesInfo = []
         # NOTE: Pads use the first row position only
-        for i in range(7):
+        for i in range(2):
             index = "0%i"%i if (direction == "x") else "%i0"%i
             if index not in l_idx:
                 continue
@@ -29,7 +29,7 @@ def getStripBox(f, ymin=0.0, ymax=100.0, getCenter=False, color=18,
         if not box: 
             print("Warning: Issue getting stripBoxInfo")
             continue
-        xCenter = box.GetMean(1) - shift
+        xCenter = box.GetMean(1) - shift - 1.0
         # Use ideal position if pitch is given
         if pitch:
             position_ref = pitch if (len(boxesInfo)%2 == 1) else pitch/2
