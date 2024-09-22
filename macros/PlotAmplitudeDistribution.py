@@ -89,6 +89,8 @@ print("Setup Langaus")
 rootfiles = [TFile(f'{ftbf_loc}/Amplitude/MidGapAmp_distribution.root'), TFile(f'{laser_loc}/MidGapAmp_distribution.root')]
 fit_type = ["landaugausfunction", "gaussian"]
 labels = ["120 GeV protons", "Laser"]
+fit_labels = ["LanGauss fit", "Gauss fit"]
+fit_labels2 = ["MPV", "Mean"]
 colors=[4,800+8]
 
 # Define hist for axes style
@@ -97,27 +99,33 @@ htemp.SetStats(0)
 htemp.SetLineWidth(3)
 htemp.Draw("AXIS")
 
-legend = TLegend(0.55, 0.5, 0.9, 0.6)
+legend = TLegend(0.4, 0.6, 0.9, 0.9)
 
 count = 0
-for file_iter,fit,color,label in zip(rootfiles,fit_type,colors,labels):
+for file_iter,fit,color,label,fitlabel,fitlabel2 in zip(rootfiles,fit_type,colors,labels,fit_labels,fit_labels2):
     hist = file_iter.Get("py")
     hist.SetStats(0)
     hist.SetLineColor(color)
     if count > 0: suffix = "same" 
     else: suffix = ""
     hist.Draw(f'hist {suffix}')
-    hist.SetLineWidth(1)
+    hist.SetLineWidth(2)
+    hist.GetXaxis().SetTitle("Amplitude [mV]")
+    hist.GetYaxis().SetTitle("Scaled counts")
     fit_func = file_iter.Get(fit)
+    amp = round(fit_func.GetParameter(1),1) # Get MPV for LanGauss function, and Mean for Gaussian function
     fit_func.SetLineColor(color)
+    fit_func.SetLineWidth(2)
+    fit_func.SetLineStyle(7)
     fit_func.Draw("same")
     legend.AddEntry(hist, label, "l")
+    legend.AddEntry(fit, fitlabel+f' ({fitlabel2}={amp} mV)', "l")
     count+=1
 
 legend.SetBorderSize(1)
 legend.SetLineColor(kBlack)
 legend.SetTextFont(myStyle.GetFont())
-legend.SetTextSize(myStyle.GetSize()-4)
+legend.SetTextSize(myStyle.GetSize()-8)
 legend.Draw("same")
 
 htemp.Draw("AXIS same")
