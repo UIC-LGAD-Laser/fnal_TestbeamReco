@@ -1,4 +1,4 @@
-from ROOT import TFile,TTree,TCanvas,TH1D,TH1F,TH2F,TLatex,TMath,TEfficiency,TGraphAsymmErrors,TLegend,TPaveText,gROOT,gStyle, gPad, kWhite, kBlack
+from ROOT import TFile,TTree,TCanvas,TH1D,TH1F,TH2F,TLatex,TMath,TEfficiency,TF1,TGraphAsymmErrors,TLegend,gROOT,gStyle, gPad, kWhite, kBlack
 import ROOT
 import os
 from stripBox import getStripBox
@@ -16,8 +16,8 @@ myStyle.ForceStyle()
 
 
 class HistoInfo:
-    def __init__(self, inHistoName, f, outHistoName, yMax=150,
-                 xlabel="", ylabel="Amplitude [mV]",
+    def __init__(self, inHistoName, f, outHistoName, yMax=5,
+                 xlabel="", ylabel="Noise [mV]",
                  sensor="", center_position = 0.0):
         self.inHistoName = inHistoName
         self.f = f
@@ -67,7 +67,7 @@ class HistoInfo:
 # Construct the argument parser
 parser = optparse.OptionParser("usage: %prog [options]\n")
 parser.add_option('-x','--xlength', dest='xlength', default = 2.5, help="Limit x-axis in final plot")
-parser.add_option('-y','--ylength', dest='ylength', default = 160, help="Max Amp value in final plot")
+parser.add_option('-y','--ylength', dest='ylength', default = 5, help="Max nosie value in final plot")
 parser.add_option('-D', dest='Dataset', default = "", help="Dataset, which determines filepath")
 parser.add_option('-d', dest='debugMode', action='store_true', default = False, help="Run debug mode")
 parser.add_option('-t', dest='useTight', action='store_true', default = False, help="Use tight cut for pass")
@@ -90,30 +90,23 @@ debugMode = options.debugMode
 is_tight = options.useTight
 
 # Get position of the central channel in the "x" direction
-# position_center = mf.get_central_channel_position(inputfile, "x")
-position_center = 0.25
+position_center = mf.get_central_channel_position(inputfile, "x")
 
-outdirOld = myStyle.GetPlotsDir(outdir, "AmplitudeCompare/")
-
-outdirSave = "../Paper_plots/"
-if not os.path.exists(outdirSave):
-    myStyle.CreateFolder("../", "Paper_plots/")
+outdir = myStyle.GetPlotsDir(outdir, "Noise/")
 
 # Save list with histograms to draw
 list_overall_htitles = [
     # [hist_input_name, short_output_name, y_axis_title]
-    ["amplitude_vs_xy", "Amplitude", "MPV signal amplitude [mV]"],
-    ["amplitudeNoSum_vs_xy", "AmplitudeNoSum", "MPV signal amplitude [mV]"]
+    ["baselineRMS_vs_xy", "Noise", "Noise [mV]"]
 ]
 
 # Amplitude per channel
 list_channel_htitles = []
-# indices = mf.get_existing_indices(inputfile, "amplitude_vs_xy_channel")
-indices = ["03","02"]
+indices = mf.get_existing_indices(inputfile, "baselineRMS_vs_xy_channel")
 for index in indices:
-    channel_element = ["amplitude_vs_xy_channel%s"%index, "Amplitude_ch%s"%index, "MPV signal amplitude [mV]"]
+    channel_element = ["baselineRMS_vs_xy_channel%s"%index, "Noise_ch%s"%index, "Noise [mV]"]
     list_channel_htitles.append(channel_element)
-    ncol = int(index[1])+1 if index[0] != "0" else 2
+    ncol = int(index[1])+1 if index[0] != "0" else 3
 
 # Use tight cut histograms
 if (is_tight):
@@ -140,13 +133,11 @@ canvas.SetGrid(0,1)
 gStyle.SetOptStat(0)
 
 if debugMode:
-    outdir_q = myStyle.CreateFolder(outdir, "Amp_vs_X_fits0/")
+    outdir_q = myStyle.CreateFolder(outdir, "Noise_vs_X_fits0/")
 
 # Get total number of bins in x-axis to loop over (all hists have the same number, in principle)
 all_histoInfos = histoInfo_overall + histoInfo_channel
 nbins = all_histoInfos[0].th2.GetXaxis().GetNbins()
-
-midgap_bins = [all_histoInfos[0].th1.GetXaxis().FindBin(-0.25)]
 
 plot_xlimit = abs(inputfile.Get("stripBoxInfo00").GetMean(1) - position_center)
 if ("pad" not in dataset) and ("500x500" not in dataset):
@@ -157,12 +148,14 @@ fit = langaus.LanGausFit()
 print("Setup Langaus")
 
 # Loop over X bins
-for i in range(all_histoInfos[0].th1.GetXaxis().FindBin(-0.25), all_histoInfos[0].th1.GetXaxis().FindBin(0.30)):
+for i in range(1, nbins+1):
     for info_entry in all_histoInfos:
         totalEvents = info_entry.th2.GetEntries()
         tmpHist = info_entry.th2.ProjectionY("py",i,i)
         myRMS = tmpHist.GetRMS()
         myMean = tmpHist.GetMean()
+        fitlow = myMean - 1.5*myRMS
+        fithigh = myMean + 1.5*myRMS
         nEvents = tmpHist.GetEntries()
         value = myMean
 
@@ -179,20 +172,20 @@ for i in range(all_histoInfos[0].th1.GetXaxis().FindBin(-0.25), all_histoInfos[0
 
         #Do fit
         if(nEvents > minEvtsCut):
-            tmpHist.Rebin(2)
-            # if (myMean > 50):
-            #     tmpHist.Rebin(5)
-            # else:
-            #     tmpHist.Rebin(10)
+            # tmpHist.Rebin(2)
 
-            myLanGausFunction = fit.fit(tmpHist, fitrange=(myMean-1.5*myRMS, myMean+3*myRMS))
-            myMPV = myLanGausFunction.GetParameter(1)
-            value = myMPV
+            fit = TF1('fit','gaus',fitlow,fithigh)
+            tmpHist.Fit(fit,"Q", "", fitlow, fithigh)
+            myFitMean = fit.GetParameter(1)
+            myFitMeanError = fit.GetParError(1)
+
+            value = myFitMean
+            error = myFitMeanError
 
             # For Debugging
             if (debugMode):
                 tmpHist.Draw("hist")
-                myLanGausFunction.Draw("same")
+                fit.Draw("same")
                 canvas.SaveAs("%sq_%s%i.gif"%(outdir_q, info_entry.outHistoName, i))
                 bin_center = info_entry.th1.GetXaxis().GetBinCenter(i)
                 msg_amp = "Bin: %i (x center = %.3f)"%(i, bin_center)
@@ -211,7 +204,7 @@ for i in range(all_histoInfos[0].th1.GetXaxis().FindBin(-0.25), all_histoInfos[0
         info_entry.th1.SetBinContent(i, value)
 
 # Define output file
-output_path = "%sCompare_AmplitudeVsX"%(outdirSave)
+output_path = "%sNoiseVsX"%(outdir)
 if (is_tight):
     output_path+= "_tight"
 output_path+= ".root"
@@ -219,12 +212,11 @@ output_path+= ".root"
 outputfile = TFile(output_path,"RECREATE")
 
 # Define hist for axes style
-# htemp = TH1F("htemp", "", 1, -xlength, xlength)
-htemp = TH1F("htemp", "", 1, -0.49, 0.49)
+htemp = TH1F("htemp", "", 1, -xlength, xlength)
 htemp.SetStats(0)
 htemp.GetXaxis().SetTitle("Track x position [mm]")
 htemp.GetYaxis().SetRangeUser(0.0, ylength)
-htemp.GetYaxis().SetTitle("MPV signal amplitude [mV]")
+htemp.GetYaxis().SetTitle("Noise [mV]")
 htemp.SetLineColor(colors[2])
 
 # Draw overall amplitude vs X
@@ -240,90 +232,70 @@ for i,info_entry in enumerate(histoInfo_overall):
     haxis.SetMinimum(ymin)
     haxis.SetMaximum(ymax)
 
+    haxis.Draw("AXIS")
     # Define and draw gray bars in the background (Position of metallic sections)
     boxes = getStripBox(inputfile, ymin=ymin, ymax=ymax, strips=True,
                         shift=position_center, pitch=pitch/1000.)
+    for box in boxes:
+        box.Draw()
+    gPad.RedrawAxis("g")
+
+    hist.Draw("hist same")
+    # legend.AddEntry(hist, legend_name[i], "lep")
 
     hist.Write()
 
+    haxis.Draw("AXIS same")
+    # legend.Draw()
+
+    # myStyle.BeamInfo()
+    myStyle.SensorInfoSmart(dataset)
+
+    save_path = "%s%s_vs_x"%(outdir, info_entry.outHistoName)
+    if (is_tight):
+        save_path+= "_tight"
+    canvas.SaveAs("%s.gif"%save_path)
+    canvas.SaveAs("%s.pdf"%save_path)
+
+    canvas.Clear()
 
 # Draw all amplitude per channel vs X
 # Define legend
 pcenter = myStyle.GetPadCenter()
 pmargin = myStyle.GetMargin()
-legend = TLegend(pcenter-0.30, 1-pmargin-0.15, pcenter+0.30, 1-pmargin-0.05)
-legend.SetLineColor(kBlack)
+legend = TLegend(pcenter-0.30, 1-pmargin-0.23, pcenter+0.30, 1-pmargin-0.01)
+legend.SetBorderSize(0)
 # legend.SetFillColor(kWhite)
 legend.SetTextFont(myStyle.GetFont())
 legend.SetTextSize(myStyle.GetSize()-4)
 legend.SetNColumns(ncol)
 
-legendBot = TLegend(pcenter-0.30, 1-pmargin-0.25, pcenter+0.30, 1-pmargin-0.15)
-legendBot.SetNColumns(2)
-legendBot.SetLineColor(kBlack)
-legendBot.SetTextFont(myStyle.GetFont())
-legendBot.SetTextSize(myStyle.GetSize()-4)
-
 htemp.Draw("AXIS")
 for box in boxes:
     box.Draw()
 gPad.RedrawAxis("g")
-map = {'02': [2],
-        '03': [1]}
+
 for i,info_entry in enumerate(histoInfo_channel):
     hist = info_entry.th1
     hist.SetLineColor(colors[i])
     hist.SetLineWidth(2)
-    hist.SetLineStyle(7)
     hist.Draw("hist same")
 
     idx = indices[i]
-    ltitle = "Pad %s"%(idx) if "10" in indices else "Strip %i"%(map[str(idx)][0])
-    # legend.AddEntry(hist, ltitle, "lp")
+    ltitle = "Pad %s"%(idx) if "10" in indices else "Strip %i"%(int(idx[1])+1)
+    legend.AddEntry(hist, ltitle, "lep")
 
     hist.Write()
 
-
-inputfileLaser = TFile("%s%sPlotAmplitudeVsX.root"%("/uscms/home/snanda/nobackup/LaserDanushUpdated/TestbeamReco/output/","LeCroy_W2_3_2_198V_99P9attn/"))
-histRightCh = inputfileLaser.Get("amplitude_vs_x_channel02")
-histRightCh.SetLineColor(colors[0])
-histRightCh.SetLineStyle(1)
-histRightCh.SetLineWidth(2)
-histLeftCh = inputfileLaser.Get("amplitude_vs_x_channel01")
-histLeftCh.SetLineColor(colors[1])
-histLeftCh.SetLineStyle(1)
-histLeftCh.SetLineWidth(2)
-histRightCh.Draw("SAME")
-histLeftCh.Draw("SAME")
-legend.AddEntry(histRightCh, "Strip 1", "lp")
-legend.AddEntry(histLeftCh, "Strip 2", "lp")
-
+htemp.Draw("AXIS same")
 legend.Draw()
-ftbf_tmphist = histoInfo_overall[-1].th1.Clone()
-ftbf_tmphist.SetLineColor(kBlack)
-ftbf_tmphist.SetLineWidth(2)
-ftbf_tmphist.SetLineStyle(7)
-laser_tmphist = histRightCh.Clone()
-laser_tmphist.SetLineWidth(2)
-laser_tmphist.SetLineStyle(1)
-laser_tmphist.SetLineColor(kBlack)
-legendBot.AddEntry(ftbf_tmphist, "120 GeV protons")
-legendBot.AddEntry(laser_tmphist, "Laser")
-legendBot.Draw()
-legendBox = TPaveText(pcenter-0.30, 1-pmargin-0.25, pcenter+0.30, 1-pmargin-0.05, "NDC")
-legendBox.SetBorderSize(1)
-legendBox.SetLineColor(kBlack)
-legendBox.SetFillColor(0)
-legendBox.SetFillColorAlpha(0, 0.0)
-legendBox.Draw("same")
 
 # myStyle.BeamInfo()
-myStyle.SensorInfoSmart(dataset,isPaperPlot=True)
+myStyle.SensorInfoSmart(dataset)
 
-htemp.Draw("AXIS same")
-save_path = "%sAmplitudeAllChannels_vs_x"%(outdirSave)
+save_path = "%sNoiseAllChannels_vs_x"%(outdir)
+canvas.SaveAs("%s.gif"%save_path)
 canvas.SaveAs("%s.pdf"%save_path)
 
 canvas.Clear()
 outputfile.Close()
-inputfileLaser.Close()

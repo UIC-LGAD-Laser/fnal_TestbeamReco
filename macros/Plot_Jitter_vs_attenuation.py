@@ -79,11 +79,12 @@ if not os.path.exists(outdir_fits):
     myStyle.CreateFolder("../", "Paper_plots/jitter_vs_attn_fits/")
 
 position_center = 0
-laser_bias_voltage = "205"
-attenuations = ["91P5", "92", "92P5", "93", "93P5", "94"]
-attenuations_val = [91.5, 92, 92.5, 93, 93.5, 94]
+laser_bias_voltage = "201"
+attenuations = ["91P5", "92", "92P5", "93", "93P5", "94", "94P5"]
+attenuations_val = [91.5, 92, 92.5, 93, 93.5, 94, 94.5]
 jitter_vs_attn = []
 jitterErr_vs_attn = []
+noise_vs_attn_laser = []
 
 print("Setting up Langaus")
 fit = langaus.LanGausFit()
@@ -108,9 +109,12 @@ for attenuation in attenuations:
     jitter_vs_attn.append(jitter)
     jitterErr_vs_attn.append(jitter_err)
     rootfile.Close()
+    noise_file = TFile(f'{laser_loc}/HPK_W5_17_2_{laser_bias_voltage}V_{attenuation}attn/NoiseStudy/PlotNoiseOverallVsX.root')
+    noise_hist = noise_file.Get("baselineRMS_vs_x")
+    noise_vs_attn_laser.append(noise_hist.GetBinContent(noise_hist.GetXaxis().FindBin(-0.25)))
+    noise_file.Close()
 
 ftbf_rootfile = TFile(f'{ftbf_loc}/{ftbf_dataset}_Analyze.root')
-# ftbf_hist = ftbf_rootfile.Get("weighted2_jitter_Overall")
 
 info_entry2 = HistoInfo("weighted2_jitter_vs_xy", ftbf_rootfile, "jitter_vs_x", ylabel="Weighted Jitter [mV]", sensor=ftbf_dataset, center_position=position_center)
 midgapbin = info_entry2.th1.GetXaxis().FindBin(-0.25)
@@ -147,37 +151,44 @@ graph.SetMarkerSize(1)
 graph.SetTitle("")
 graph.GetXaxis().SetTitle("Attenuation [%]")
 graph.GetYaxis().SetTitle("Weighted jitter [ps]")
-graph.GetYaxis().SetRangeUser(15.0, 35.0)
+graph.GetYaxis().SetRangeUser(10.0, 30.0)
 graph.GetXaxis().SetRangeUser(90,95)
 graph.Draw("AP same")
 
 # if ftbf_jitter_err<1: ftbf_jitter_err = 1
-band = TGraphAsymmErrors(2, array('d', [91.5, 94]), array('d', [ftbf_jitter, ftbf_jitter]), array('d', [0, 0]), array('d', [0, 0]), array('d', [ftbf_jitter_err]*2), array('d', [ftbf_jitter_err]*2))
+band = TGraphAsymmErrors(2, array('d', [91.5, 94.5]), array('d', [ftbf_jitter, ftbf_jitter]), array('d', [0, 0]), array('d', [0, 0]), array('d', [ftbf_jitter_err]*2), array('d', [ftbf_jitter_err]*2))
 band.SetFillColor(4)
 band.SetFillStyle(3001)  # 3001 is a style for a semi-transparent fill
 band.Draw("3 same")
 
-line = TGraph(2, array('d', [91.5, 94]), array('d', [ftbf_jitter, ftbf_jitter]))
+line = TGraph(2, array('d', [91.5, 94.5]), array('d', [ftbf_jitter, ftbf_jitter]))
 line.SetLineColor(4)
 line.SetLineStyle(4)
 line.SetLineWidth(2)
 line.Draw("L same")
 
-ftbf_jitter = 1.33 * ftbf_jitter
-scaledband = TGraphAsymmErrors(2, array('d', [91.5, 94]), array('d', [ftbf_jitter, ftbf_jitter]), array('d', [0, 0]), array('d', [0, 0]), array('d', [ftbf_jitter_err]*2), array('d', [ftbf_jitter_err]*2))
+
+ftbf_noise_file = TFile(f'{ftbf_loc}/Noise/NoiseVsX.root')
+ftbf_noise_hist = ftbf_noise_file.Get("Noise")
+ftbf_noise = ftbf_noise_hist.GetBinContent(ftbf_noise_hist.GetXaxis().FindBin(-0.25))
+
+print("Noise vs attn from laser: ", noise_vs_attn_laser)
+# ftbf_jitter = 1.33 * ftbf_jitter
+ftbf_jitter = noise_vs_attn_laser[0] * ftbf_jitter / ftbf_noise
+scaledband = TGraphAsymmErrors(2, array('d', [91.5, 94.5]), array('d', [ftbf_jitter, ftbf_jitter]), array('d', [0, 0]), array('d', [0, 0]), array('d', [ftbf_jitter_err]*2), array('d', [ftbf_jitter_err]*2))
 scaledband.SetFillColor(1)
 scaledband.SetFillStyle(3001)  # 3001 is a style for a semi-transparent fill
-scaledband.Draw("3 same")
+# scaledband.Draw("3 same")
 
-scaledline = TGraph(2, array('d', [91.5, 94]), array('d', [ftbf_jitter, ftbf_jitter]))
+scaledline = TGraph(2, array('d', [91.5, 94.5]), array('d', [ftbf_jitter, ftbf_jitter]))
 scaledline.SetLineColor(1)
 scaledline.SetLineStyle(4)
 scaledline.SetLineWidth(2)
-scaledline.Draw("L same")
+# scaledline.Draw("L same")
 
 legend = TLegend(0.15, 0.7, 0.67, 0.9)
 legend.AddEntry(line, "120 GeV protons", "f")
-legend.AddEntry(scaledline, "120 GeV protons (Scaled)", "f")
+# legend.AddEntry(scaledline, "120 GeV protons (Scaled)", "f")
 legend.AddEntry(graph, "Laser", "ep")
 legend.SetBorderSize(1)
 legend.SetLineColor(kBlack)
@@ -190,6 +201,6 @@ htemp.Draw("AXIS same")
 # myStyle.BeamInfo()
 myStyle.SensorInfoSmart(ftbf_dataset,isPaperPlot=True)
 
-canvas.SaveAs(f'{outdir}jitter_vs_attn.pdf')
+canvas.SaveAs(f'{outdir}jitter_vs_attn_{laser_bias_voltage}V.pdf')
 canvas.Clear()
 

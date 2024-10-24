@@ -91,7 +91,7 @@ fit_type = ["landaugausfunction", "gaussian"]
 labels = ["120 GeV protons", "Laser"]
 fit_labels = ["LanGauss fit", "Gauss fit"]
 fit_labels2 = ["MPV", "Mean"]
-colors=[4,800+8]
+colors=[colors[0], colors[2]]
 
 # Define hist for axes style
 htemp = TH1F()
