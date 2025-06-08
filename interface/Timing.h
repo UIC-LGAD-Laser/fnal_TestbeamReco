@@ -51,6 +51,7 @@ private:
         double weighted_time_trackerX = 0.0, weighted2_time_trackerX = 0.0;
         double weighted2_jitter = 0.0;
         double weighted2_jitter_NewDef = 0.0;
+        double t1_res = 0.0, t2_res = 0.0; //DS - new variables to plot t1 and t2 vs X and compare with simulation results.
 
         bool similarTime12 = abs(time2 - time1) < 1.0;
         bool twoGoodChannel = amp1 > noiseAmpThreshold  &&  amp2 > noiseAmpThreshold && similarTime12 && time1 != 0.0 && time2 != 0.0;
@@ -76,6 +77,8 @@ private:
 
             weighted2_jitter = jitter1;
             weighted2_jitter_NewDef = jitter1;
+
+            t1_res = timeTracker1;
         }
         else
         {
@@ -98,6 +101,9 @@ private:
 
             weighted2_jitter = std::sqrt((amp1*amp1*jitter1*jitter1 + amp2*amp2*jitter2*jitter2)/sum_amp2);
             weighted2_jitter_NewDef = std::sqrt((amp1*amp1*amp1*amp1*jitter1*jitter1 + amp2*amp2*amp2*amp2*jitter2*jitter2)/(sum_amp2*sum_amp2));
+
+            t1_res = timeTracker1;
+            t2_res = timeTracker2;
         }
    
         bool twoGoodChannelSignalThres = amp1 > signalAmpThreshold  &&  amp2 > signalAmpThreshold && similarTime12 && time1 != 0.0 && time2 != 0.0;
@@ -133,6 +139,8 @@ private:
         tr.registerDerivedVar("weighted2_jitter", weighted2_jitter);
         tr.registerDerivedVar("weighted2_jitter_NewDef", weighted2_jitter_NewDef);
         tr.registerDerivedVar("twoGoodChannel", twoGoodChannel);
+        tr.registerDerivedVar("t1_res", t1_res);
+        tr.registerDerivedVar("t2_res", t2_res);
 
 
     }

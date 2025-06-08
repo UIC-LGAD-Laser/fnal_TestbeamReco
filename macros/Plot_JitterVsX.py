@@ -156,7 +156,9 @@ for i in range(1, nbins+1):
             tmpHist.Rebin(2)
             myLanGausFunction = fit.fit(tmpHist, fitrange=(myMean-1.5*myRMS,myMean+3*myRMS))
             myMPV = myLanGausFunction.GetParameter(1)
+            myMPVError = myLanGausFunction.GetParError(1)
             value = myMPV
+            error = myMPVError
 	    # gaussian = TF1("gaussian", "gaus")
             # gaussian.SetRange(myMean-2*myRMS,myMean+2*myRMS)
             # tmpHist.Fit(gaussian, "R")
@@ -183,7 +185,10 @@ for i in range(1, nbins+1):
             value = 0.0
             error = 0.0
 
-        value = value if (value>0.0) else 0.0
+        # value = value if (value>0.0) else 0.0
+        if(value<0):
+            value = 0.0
+            error = 0.0
 
         # Fill only when inside limits
         if not mf.is_inside_limits(i, info_entry.th1, xmax=plot_xlimit):

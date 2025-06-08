@@ -115,7 +115,7 @@ for i, (hist, label, tmpcolor) in enumerate(zip(all_histos_shifted, labels, colo
     hist.SetLineWidth(2)
     hist.SetLineStyle(7)
     hist.SetStats(0)
-    hist.Draw("hist same")
+    hist.Draw("hist E same")
     legend.AddEntry(hist, "120 GeV protons")
 
 inputfileLaser = TFile(f'/uscms/home/dshekar/nobackup/laser_analysis/TestbeamReco/output/{laser_dataset}/NoiseStudy/PlotNoiseOverallVsX.root')
@@ -128,7 +128,7 @@ for i, (hist, label, tmpcolor) in enumerate(zip(laser_all_histos_shifted, labels
     hist.SetLineColor(colors[2])
     hist.SetLineWidth(2)
     # hist.SetStats(0)
-    hist.Draw("hist same")
+    hist.Draw("hist E same")
     legend.AddEntry(hist, "Laser")
 
 ftbf_tmphist = allHistos[-1].Clone()

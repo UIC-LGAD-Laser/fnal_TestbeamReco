@@ -176,10 +176,14 @@ for i in range(1, nbins+1):
                 print(msg_amp)
         else:
             value = 0.0
+            error = 0.0
 
-        value = value if (value>0.0) else 0.0
+        if (value<0.0):
+            value = 0.0
+            error = 0.0
 
         info_entry.th1.SetBinContent(i, value)
+        info_entry.th1.SetBinError(i, error)
 
 # Define output file
 output_path = "%sNoiseLeadingVsX"%(outdir)
@@ -227,7 +231,7 @@ for i,info_entry in enumerate(all_histoInfos):
         box.Draw()
     gPad.RedrawAxis("g")
 
-    hist.Draw("hist same")
+    hist.Draw("hist E same")
     # legend.AddEntry(hist, legend_name[i], "lep")
 
     hist.Write()

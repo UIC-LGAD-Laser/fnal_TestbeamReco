@@ -61,19 +61,6 @@ if not os.path.exists(outdirSave):
 inputfile_Analyze = TFile("%s%s_Analyze.root"%(outdir,dataset))
 colors = myStyle.GetColors(True)
 
-
-noise_file = TFile(f'/uscms/home/dshekar/nobackup/laser_analysis/TestbeamReco/output/{laser_dataset}/NoiseStudy/PlotNoiseOverallVsX.root')
-noise_hist = noise_file.Get("baselineRMS_vs_x")
-noise_laser = noise_hist.GetBinContent(noise_hist.GetXaxis().FindBin(-0.25))
-noise_file.Close()
-ftbf_noise_file = TFile(f'{outdir}/Noise/NoiseVsX.root')
-ftbf_noise_hist = ftbf_noise_file.Get("Noise")
-noise_ftbf = ftbf_noise_hist.GetBinContent(ftbf_noise_hist.GetXaxis().FindBin(-0.25))
-ftbf_noise_file.Close()
-scaling_factor = noise_laser/noise_ftbf
-print("Noise from laser at midgap = ", noise_laser)
-print("Noise from ftbf at midgap = ", noise_ftbf)
-
 sensor_Geometry = myStyle.GetGeometry(dataset)
 
 sensor = sensor_Geometry['sensor']
@@ -86,22 +73,26 @@ tr = inputfile2.Get("Time_DiffW2Tracker")
 landau = jitter.Clone("landau_vs_x")
 
 for number in range(1, jitter.GetXaxis().GetNbins()+1):
-    j = jitter.GetBinContent(number)*scaling_factor
+    j = jitter.GetBinContent(number)
+    j_error = jitter.GetBinError(number)
     x_position = jitter.GetXaxis().GetBinCenter(number)
     bin_number_tr = tr.FindBin(x_position)
     t = tr.GetBinContent(bin_number_tr)
+    t_error = tr.GetBinError(bin_number_tr)
     # t = tr.GetBinContent(number)
-    if (t>=j):
+    if (t>j):
         l = math.sqrt(t*t - j*j)
+        l_error = math.sqrt((t**2 * t_error**2 / l**2) + (j**2 * j_error**2 / l**2))
     else:
         l = 0
+        l_error = 0
     landau.SetBinContent(number, l)
-    jitter.SetBinContent(number, j)
+    landau.SetBinError(number,l_error)
 
 allHistos = [tr, jitter, landau]
 names = ["tr_vs_x","jitter_vs_x","landau_vs_x"]
 colors_new = [colors[2], colors[0], colors[4]]
-labels = ["Total time resolution", "Scaled weighted jitter", "TR - Jitter (quadrature)"]
+labels = ["Total time resolution (t)", "Weighted jitter (j)",   "#sqrt{t^{2} - j^{2}}"]
 
 # Define hist for axes style
 htemp = TH1F("htemp", "", 1, -xlength, xlength)
@@ -147,26 +138,28 @@ all_histos_shifted = []
 for i,j in zip(allHistos,names):
     all_histos_shifted.append(shift_histogram(i,j))
 for i, (hist, label, tmpcolor) in enumerate(zip(all_histos_shifted, labels, colors_new)):
+    hist.GetXaxis().SetRangeUser(-0.25, 0.25)
     hist.SetLineColor(tmpcolor)
     hist.SetLineWidth(2)
     hist.SetLineStyle(7)
     hist.SetStats(0)
-    hist.Draw("hist same")
+    hist.Draw("hist E same")
     # legend.AddEntry(hist, label, "lp")
 
 inputfileLaser = TFile("%s%sAllTRs.root"%("/uscms/home/dshekar/nobackup/laser_analysis/TestbeamReco/output/",laser_dataset+'/'))
 tr_laser = inputfileLaser.Get("weighted2_time_diffTracker")
-jitter_laser = inputfileLaser.Get("jitter_vs_x")
+scaled_jitter_laser = inputfileLaser.Get("scaled_jitter_vs_x")
 landau_laser = inputfileLaser.Get("landau_vs_x")
-laser_allHistos = [tr_laser, jitter_laser, landau_laser]
+laser_allHistos = [tr_laser, scaled_jitter_laser, landau_laser]
 laser_all_histos_shifted = []
 for i,j in zip(laser_allHistos,names):
     laser_all_histos_shifted.append(shift_histogram(i,j))
 for i, (hist, label, tmpcolor) in enumerate(zip(laser_all_histos_shifted, labels, colors_new)):
+    hist.GetXaxis().SetRangeUser(-0.2, 0.2)
     hist.SetLineColor(tmpcolor)
     hist.SetLineWidth(2)
     # hist.SetStats(0)
-    hist.Draw("hist same")
+    hist.Draw("hist E same")
     legend.AddEntry(hist, label, "lp")
 
 legend.Draw()

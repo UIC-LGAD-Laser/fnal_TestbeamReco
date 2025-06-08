@@ -556,6 +556,9 @@ void Analyze::InitHistos(NTupleReader& tr, const std::vector<std::vector<int>>& 
     utility::makeHisto(my_3d_histos,"weighted_timeDiff_tracker_vs_xy", "; X [mm]; Y [mm]", std::round((xmax-xmin)/xBinSize),xmin,xmax, timeDiffYnbin,ymin,ymax, timeDiffNbin,timeDiffLow,timeDiffHigh);
     utility::makeHisto(my_3d_histos,"weighted2_timeDiff_vs_xy", "; X [mm]; Y [mm]", std::round((xmax-xmin)/xBinSize),xmin,xmax, timeDiffYnbin,ymin,ymax, timeDiffNbin,timeDiffLow,timeDiffHigh);
     utility::makeHisto(my_3d_histos,"weighted2_timeDiff_tracker_vs_xy", "; X [mm]; Y [mm]", std::round((xmax-xmin)/xBinSize),xmin,xmax, timeDiffYnbin,ymin,ymax, timeDiffNbin,timeDiffLow,timeDiffHigh);
+    //DS - new variables to plot t1 and t2 vs X and compare with simulation results.
+    utility::makeHisto(my_3d_histos,"t1_res_vs_xy", "; X [mm]; Y [mm]", std::round((xmax-xmin)/xBinSize),xmin,xmax, timeDiffYnbin,ymin,ymax, timeDiffNbin,timeDiffLow,timeDiffHigh);
+    utility::makeHisto(my_3d_histos,"t2_res_vs_xy", "; X [mm]; Y [mm]", std::round((xmax-xmin)/xBinSize),xmin,xmax, timeDiffYnbin,ymin,ymax, timeDiffNbin,timeDiffLow,timeDiffHigh);
     utility::makeHisto(my_3d_histos,"weighted2_timeDiff_tracker_vs_xy_hotspot", "; X [mm]; Y [mm]", std::round((xmax-xmin)/xBinSize),xmin,xmax, timeDiffYnbin,ymin,ymax, timeDiffNbin,timeDiffLow,timeDiffHigh);
 
     utility::makeHisto(my_3d_histos,"weighted_timeDiff_vs_xy_Odd", "; X [mm]; Y [mm]", std::round((xmax-xmin)/xBinSize),xmin,xmax, timeDiffYnbin,ymin,ymax, timeDiffNbin,timeDiffLow,timeDiffHigh);
@@ -886,6 +889,8 @@ void Analyze::Loop(NTupleReader& tr, int maxevents)
         const auto& weighted_time_tracker = tr.getVar<double>("weighted_time_tracker");
         const auto& weighted2_time = tr.getVar<double>("weighted2_time");
         const auto& weighted2_time_tracker = tr.getVar<double>("weighted2_time_tracker");
+        const auto& t1_res = tr.getVar<double>("t1_res");
+        const auto& t2_res = tr.getVar<double>("t2_res");
         const auto& weighted_time_goodSig = tr.getVar<double>("weighted_time_goodSig");
         const auto& weighted2_time_goodSig = tr.getVar<double>("weighted2_time_goodSig");
         const auto& weighted2_jitter = tr.getVar<double>("weighted2_jitter");
@@ -1647,6 +1652,8 @@ void Analyze::Loop(NTupleReader& tr, int maxevents)
         utility::fillHisto(pass && goodAmpColHit,                                   my_3d_histos, "weighted_timeDiff_tracker_vs_xy", x,y,weighted_time_tracker-photekTime);
         utility::fillHisto(pass && goodAmpColHit,                                   my_3d_histos, "weighted2_timeDiff_vs_xy", x,y,weighted2_time-photekTime);
         utility::fillHisto(pass && goodAmpColHit,                                   my_3d_histos, "weighted2_timeDiff_tracker_vs_xy", x,y,weighted2_time_tracker-photekTime);
+        utility::fillHisto(pass && goodAmpColHit,                                   my_3d_histos, "t1_res_vs_xy", x,y,t1_res-photekTime);
+        utility::fillHisto(pass && goodAmpColHit,                                   my_3d_histos, "t2_res_vs_xy", x,y,t2_res-photekTime);
 
         utility::fillHisto(pass && goodAmpColHit && OddChannel,                     my_3d_histos, "weighted_timeDiff_vs_xy_Odd", x,y,weighted_time-photekTime);
         utility::fillHisto(pass && goodAmpColHit && OddChannel,                     my_3d_histos, "weighted_timeDiff_tracker_vs_xy_Odd", x,y,weighted_time_tracker-photekTime);

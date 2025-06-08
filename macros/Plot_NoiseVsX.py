@@ -194,14 +194,19 @@ for i in range(1, nbins+1):
                 print(msg_amp)
         else:
             value = 0.0
+            error = 0.0
 
-        value = value if (value>0.0) else 0.0
+        # value = value if (value>0.0) else 0.0
+        if(value<0):
+            value = 0.0
+            error = 0.0
 
         # Fill only when inside limits
         if not mf.is_inside_limits(i, info_entry.th1, xmax=plot_xlimit):
             continue
 
         info_entry.th1.SetBinContent(i, value)
+        info_entry.th1.SetBinError(i, error)
 
 # Define output file
 output_path = "%sNoiseVsX"%(outdir)
@@ -240,7 +245,7 @@ for i,info_entry in enumerate(histoInfo_overall):
         box.Draw()
     gPad.RedrawAxis("g")
 
-    hist.Draw("hist same")
+    hist.Draw("hist E same")
     # legend.AddEntry(hist, legend_name[i], "lep")
 
     hist.Write()
@@ -279,7 +284,7 @@ for i,info_entry in enumerate(histoInfo_channel):
     hist = info_entry.th1
     hist.SetLineColor(colors[i])
     hist.SetLineWidth(2)
-    hist.Draw("hist same")
+    hist.Draw("hist E same")
 
     idx = indices[i]
     ltitle = "Pad %s"%(idx) if "10" in indices else "Strip %i"%(int(idx[1])+1)
