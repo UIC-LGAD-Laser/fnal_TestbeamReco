@@ -281,7 +281,7 @@ for i in range(all_histoInfos[0].th1.GetXaxis().FindBin(-0.25), all_histoInfos[0
         # Define minimum of bin's entries to be fitted
         minEvtsCut = totalEvents/nbins
         if ("HPK_W9_15_2" in dataset):
-            minEvtsCut = 0.25*totalEvents/nbins
+            minEvtsCut = 0.7*totalEvents/nbins
         if ("500x500" in dataset) and ("Cross" not in dataset):
             minEvtsCut = 0.1*totalEvents/nbins
         if ("W9_23_3_20T_500x500_300M" in dataset):
@@ -346,7 +346,7 @@ for i in range(all_histoInfos[0].th1.GetXaxis().FindBin(-0.25), all_histoInfos[0
         info_entry.th1.SetBinError(i, error)
 
 # Define output file
-output_path = "%sPositionResVsX_%s"%(outdirSave,dataset)
+output_path = "%sPositionResVsX_%s"%(outdirnew,dataset)
 if (is_hotspot):
     output_path+= "_hotspot"
 elif (is_tight):
@@ -424,7 +424,8 @@ hist.Draw("HIST E SAME")
 hist.Write()
 
 inputfileLaser = TFile("%s%sPlotCompareXRes.root"%("/uscms/home/dshekar/nobackup/laser_analysis/TestbeamReco/output/",laser_dataset+'/Paper_XRes/'))
-histLaser = inputfileLaser.Get("h_twoStrip")
+# histLaser = inputfileLaser.Get("h_twoStrip")
+histLaser = inputfileLaser.Get("scaled_h_twoStrip")
 histLaser.SetLineColor(colors[2])
 histLaser.SetLineWidth(2)
 histLaser.Draw("hist e SAME")

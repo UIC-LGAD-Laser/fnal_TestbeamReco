@@ -339,9 +339,10 @@ public:
     std::map<int, double> timeCalibrationCorrection = {{0,0.70976}, {1,0.59048}, {2,0.79824}, {3,0.60060}, {4,0.67771}, {5,0.57228}, {6,0.74993}, {7,0.0}};
     double stripWidth = 0.050;
     double pitch = 0.500;
-    double sensorCenter  = 0.5; // Lab-Tracker's frame ->  y_dut
+    double sensorCenter  = 0.5-0.025; // Lab-Tracker's frame ->  y_dut
     double sensorCenterY = 1.0; // Lab-Tracker's frame -> -x_dut
-    std::vector<double> stripCenterXPosition = {1.459, 0.963, 0.460, -0.042, -0.539, -1.042, -1.540, 0.0};
+    std::vector<double> stripCenterXPosition = {1.481, 0.985, 0.480, -0.021, -0.517, -1.022, -1.518, 0.0}; // Results for laser paper after shifting sensor center
+    // std::vector<double> stripCenterXPosition = {1.459, 0.963, 0.460, -0.042, -0.539, -1.042, -1.540, 0.0}; // Original FTBF results
     int numLGADchannels = 7;
     int lowGoodStripIndex = 1;
     int highGoodStripIndex = 5;
@@ -355,7 +356,8 @@ public:
     double xmax =  2.50; // Sensor's local frame
     double ymin = -5.25; // Sensor's local frame
     double ymax =  5.25; // Sensor's local frame
-    double positionRecoMaxPoint = 0.85;
+    double positionRecoMaxPoint = 0.84; // Results for laser paper after shifting sensor center
+    // double positionRecoMaxPoint = 0.85; // Original FTBF results
     double photekSignalThreshold = 150.0;
     double noiseAmpThreshold  = 15.0;
     double signalAmpThreshold = 15.0;
@@ -365,7 +367,8 @@ public:
     int minPixHits = 2;
     int minStripHits = 6;
     int CFD_threshold = 50;
-    std::vector<double> positionRecoPar = {0.250000, -0.639735, -0.431173, 3.227442, -8.977157, 11.446396};
+    std::vector<double> positionRecoPar = {0.250000, -0.658685, -0.000959, -0.271594, 2.914282, -2.490448}; // Results for laser paper after shifting sensor center
+    // std::vector<double> positionRecoPar = {0.250000, -0.639735, -0.431173, 3.227442, -8.977157, 11.446396}; // Original FTBF results
     std::vector<std::vector<double>> sensorEdges = {{-1.8, -4.70}, {1.8, 4.70}}; // Sensor's local frame
     std::vector<std::vector<double>> sensorEdgesTight = {{stripCenterXPosition[highGoodStripIndex], -4.6}, {stripCenterXPosition[lowGoodStripIndex], 4.6}}; // Sensor's local frame
     int centerGoodStripIndex = 3;
