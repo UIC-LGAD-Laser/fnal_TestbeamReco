@@ -423,7 +423,7 @@ hist.SetLineStyle(7)
 hist.Draw("HIST E SAME")
 hist.Write()
 
-inputfileLaser = TFile("%s%sPlotCompareXRes.root"%("/uscms/home/dshekar/nobackup/laser_analysis/TestbeamReco/output/",laser_dataset+'/Paper_XRes/'))
+inputfileLaser = TFile("%s%sPlotCompareXRes_trackerSubtraction0.0.root"%("/uscms/home/dshekar/nobackup/laser_analysis/TestbeamReco/output/",laser_dataset+'/Paper_XRes/'))
 # histLaser = inputfileLaser.Get("h_twoStrip")
 histLaser = inputfileLaser.Get("scaled_h_twoStrip")
 histLaser.SetLineColor(colors[2])
